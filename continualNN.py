@@ -82,15 +82,6 @@ class ContinualNN(object):
 
 
 	def train(self, epoch, trainloader):
-		if args.resume:
-			# Load checkpoint.
-			logging.info('==> Resuming from checkpoint..')
-			assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-			checkpoint = torch.load('./checkpoint/ckpt.t7')
-			self.net.load_state_dict(checkpoint['net'])
-			best_acc = checkpoint['acc']
-			start_epoch = checkpoint['epoch']
-
 		logging.info('\nEpoch: %d lr: %s' % (epoch, self.scheduler.get_lr()))
 		self.net.train()
 		train_loss = 0.0
@@ -120,31 +111,40 @@ class ContinualNN(object):
 			acc = 100.*correct/total
 			progress_bar(batch_idx, len(trainloader), 'Loss:%.3f|Acc:%.3f%% (%d/%d)--Train' % (train_loss/(batch_idx+1), acc, correct, total))
 
-		self.save_folder = self.name_save_folder(args)
-
-		if epoch == 1 or epoch % args.save_epoch == 0 or epoch == 150:
-			state = {
-				'acc': acc,
-				'epoch': epoch,
-				'state_dict': self.net.module.state_dict() if args.ngpu > 1 else self.net.state_dict(),
-			}
-			opt_state = {
-				'optimizer': self.optimizer.state_dict()
-			}
-			torch.save(state, '../loss-landscape/cifar10/trained_nets/'+self.save_folder+'_model_epoch'+ str(epoch) + '.t7')
-			torch.save(opt_state, '../loss-landscape/cifar10/trained_nets/'+self.save_folder+'_opt_state_epoch' + str(epoch) + '.t7')
-
+		if epoch == 0 or epoch == args.epoch - 1 or epoch == args.epoch // 2:
+			self.save_checkpoint_t7(epoch, acc, train_loss)
 		return correct/total
 
+	def save_checkpoint_t7(self, epoch, acc, loss, postfix = None):
+		self.save_folder = self.name_save_folder(args)
+		state = {
+			'acc': acc,
+			'loss': loss,
+			'epoch': epoch,
+			'state_dict': self.net.module.state_dict() if args.ngpu > 1 else self.net.state_dict(),
+			'optimizer_state_dict': self.optimizer.state_dict(),
+
+		}
+		opt_state = {
+			'optimizer': self.optimizer.state_dict()
+		}
+
+
+		self.model_file = '../loss-landscape/cifar10/trained_nets/'+self.save_folder+'_model_epoch'+ str(epoch) + postfix +'.t7'
+		logging.info('Saving checkpiont to ' + self.model_file)
+		torch.save(state, self.model_file)
+		# torch.save(opt_state, '../loss-landscape/cifar10/trained_nets/'+self.save_folder+'_opt_state_epoch' + str(epoch) + '.t7')
+
+
 	def name_save_folder(self, args):
-		self.save_folder = args.model + '_' + str(args.optimizer) + '_lr=' + str(args.lr)
+		save_folder = args.model + '_lr=' + str(args.lr)
 		# if args.lr_decay != 0.1:
 		# 	self.save_folder += '_lr_decay=' + str(args.lr_decay)
-		self.save_folder += '_bs=' + str(args.batch_size)
+		save_folder += '_bs=' + str(args.batch_size)
 		# self.save_folder += '_wd=' + str(args.weight_decay)
 		# self.save_folder += '_mom=' + str(args.momentum)
 		# self.save_folder += '_save_epoch=' + str(args.save_epoch)
-		return self.save_folder
+		return save_folder
 		# if args.loss_name != 'crossentropy':
 		# 	self.save_folder += '_loss=' + str(args.loss_name)
 		# if args.noaug:
@@ -231,23 +231,11 @@ class ContinualNN(object):
 		return correct/total
 
 
-	def save_checkpoint(self, epoch, acc):
-		logging.info('Saving checkpoint..')
-		if not os.path.isdir('../checkpoint'):
-			os.mkdir('../checkpoint')
-		PATH = '../checkpoint/ckpt_epoch{}_accu{}.pt'.format(epoch, acc)
-		torch.save({
-			'epoch': epoch,
-			'model_state_dict': self.net.state_dict(),
-			'optimizer_state_dict': self.optimizer.state_dict(),
-			'loss': self.loss,
-		}, PATH)
-
 
 	def save_model(self, model_id, task_id):
 		if not os.path.isdir(self.model_path):
 		   os.mkdir(self.model_path)
-		file_name = "Task{}_model{}_classes{}_shf{}_top{}.pickle".format(task_id, model_id, args.classes_per_task, args.shuffle, args.threshold_task)
+		file_name = "Task{}_model{}_classes{}_shf{}.pickle".format(task_id, model_id, args.classes_per_task, args.shuffle)
 		path = os.path.join(self.model_path, file_name)
 		pickle.dump(self.net.state_dict(), open(path, 'wb'))
 
@@ -313,61 +301,29 @@ class ContinualNN(object):
 		plt.savefig('../results/histogram'+title+'.png')
 
 
-
-
-	def convert_list_to_dict(self, gradient_list, threshold_list, mask_file, taylor_list): # test drift range of the rest parameters
-		threshold_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
-		gradient_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
-		mask_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
-		mask_R_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
-		taylor_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
-
-		idx = 0
-
-		mask_list = []
-		mask_list_R = []
-		for i in range(len(mask_file[0])):
-			mask_list.append(torch.from_numpy(mask_file[0][i]).type(torch.cuda.FloatTensor))
-			mask_list_R.append(torch.from_numpy(mask_file[1][i]).type(torch.cuda.FloatTensor))
-
-		for layer_name, param in self.net.state_dict().items():
-			# print(layer_name, param.shape)
-			threshold_dict[layer_name] = threshold_list[idx]
-			gradient_dict[layer_name] = gradient_list[idx]
-			mask_dict[layer_name] = mask_list[idx]
-			mask_R_dict[layer_name] = mask_list_R[idx]
-			taylor_dict[layer_name] = taylor_list[idx]
-			idx += 1
-		# for i, key in enumerate(mask_dict): # check if threshold loading into correct dictionary
-		#     assert threshold_list[i] == threshold_dict[key], 'Threshold loading incorrect'
-		#     assert taylor_list[i].all() == taylor_dict[key].all(), 'Taylor loading incorrect'
-		#     assert gradient_list[i].all() == gradient_dict[key].all(), 'Gradient loading incorrect'
-		logging.info('Several lists are converted into dictionaries (in torch.cuda)\n\n')
-		return  gradient_dict, threshold_dict, mask_dict, mask_R_dict, taylor_dict
-
-
-
 	def train_with_frozen_filter(self, epoch, trainloader, mask_dict, mask_dict_R):
+
 		param_old_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
 		for layer_name, param in self.net.state_dict().items():
 			param_old_dict[layer_name] = param.clone()
 
-		logging.info('\nEpoch: %d lr: %s' % (epoch, self.scheduler.get_lr()))
-		self.scheduler.step()
 		self.net.train()
+		logging.info('\nEpoch: %d lr: %s' % (epoch, self.scheduler.get_lr()))
 		train_loss = 0.0
 		correct = 0
 		total = 0
+		self.optimizer.step()
+		self.scheduler.step()
 
 		for batch_idx, (inputs, targets) in enumerate(trainloader):
-
 			inputs, targets = inputs.to(self.device), targets.to(self.device)
-
 			inputs_var = Variable(inputs)
 			targets_var = Variable(targets)
+
 			self.optimizer.zero_grad()
-			outputs,_ = self.net(inputs_var)
+			outputs = self.net(inputs_var)
 			loss = self.criterion(outputs, targets)
+
 			loss.backward()
 			self.optimizer.step()
 
@@ -375,16 +331,20 @@ class ContinualNN(object):
 			_, predicted = outputs.max(1)
 			total += targets.size(0)
 			correct += predicted.eq(targets).sum().item()
-
+			acc = 100. * correct / total
 			# apply mask
 			param_processed = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
 			for layer_name, param_new in self.net.state_dict().items():
 				param_new = param_new.type(torch.cuda.FloatTensor)
 				param_old_dict[layer_name] = param_old_dict[layer_name].type(torch.cuda.FloatTensor)
-
+				# print(layer_name)
 				if re.search('conv', layer_name):
 					param_processed[layer_name] = Variable(torch.mul(param_old_dict[layer_name], mask_dict[layer_name]) +
 														   torch.mul(param_new, mask_dict_R[layer_name]), requires_grad=True)
+
+
+
+					# print('new\n', param_new[0:3, 0, :, :])
 
 				elif re.search('shortcut', layer_name):
 					if len(param_new.shape) == 4:  # conv in shortcut
@@ -398,11 +358,26 @@ class ContinualNN(object):
 
 				else:
 					param_processed[layer_name] = Variable(param_new, requires_grad=True)  # num_batches_tracked
-					# raise ValueError('some parameters are skipped, plz check {}'.format(layer_name))  # num_batches_tracked
+
+			# print('old\n', param_old_dict['conv1.weight'][0:3, 0, :, :])
+			# print('mask\n', mask_dict['conv1.weight'][0:3, 0, :, :])
+			# print('mask_R\n', mask_dict_R['conv1.weight'][0:3, 0, :, :])
+			# print('param_processed\n', param_processed['conv1.weight'][0:3, 0, :, :])
+
+
+
 			self.net.load_state_dict(param_processed)
 			progress_bar(batch_idx, len(trainloader), 'Loss:%.3f|Acc:%.3f%% (%d/%d)--Train' % (
-			train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+			train_loss / (batch_idx + 1), acc, correct, total))
+
+
+		if epoch == 0 or epoch == args.epoch_edge - 1 or epoch == args.epoch_edge // 2:
+			self.save_checkpoint_t7(epoch, acc, train_loss, '_edge_model')
 		return correct / total
+
+
+
+
 
 
 	def test_multihead(self, task_id, testloader):
@@ -442,17 +417,18 @@ class ContinualNN(object):
 		logging.info("Obtain top {} position according to {} ........".format(threshold, args.score))
 
 		for m in self.net.modules():
-			# print(m, m.weight.data.shape)
+			# print(m)
 			if type(m) != nn.Sequential and i != 0:
 				if isinstance(m, nn.Conv2d):
 					total_param = m.weight.data.shape[0]
 					weight_copy = m.weight.data.abs().clone().cpu().numpy()
-					grad_copy = m.weight.grad.data.abs().clone().cpu().numpy()
 					if args.score == 'abs_w':
 						taylor = np.sum(weight_copy,  axis=(1,2,3))
 					elif args.score == 'abs_grad':
+						grad_copy = m.weight.grad.data.abs().clone().cpu().numpy()
 						taylor = np.sum(grad_copy, axis=(1,2,3))
 					elif args.score == 'grad_w':
+						grad_copy = m.weight.grad.data.abs().clone().cpu().numpy()
 						taylor = np.sum(weight_copy*grad_copy, axis=(1, 2, 3))
 
 					num_keep = int(total_param * threshold)
@@ -467,7 +443,8 @@ class ContinualNN(object):
 					mask_list_4d.append(mask)  # 0 is more
 					mask_list_R_4d.append(mask_R)  # 1 is more
 					threshold_list.append(thre)
-					gradient_list.append(m.weight.grad.data.clone().cpu().numpy())
+					if args.score in ['abs_grad', 'grad_w']:
+						gradient_list.append(m.weight.grad.data.clone().cpu().numpy())
 					weight_list.append(m.weight.data.clone().cpu().numpy())
 					taylor_list.append(taylor)
 
@@ -475,12 +452,13 @@ class ContinualNN(object):
 					# bn weight
 					total_param = m.weight.data.shape[0]
 					weight_copy = m.weight.data.abs().clone().cpu().numpy()
-					grad_copy = m.weight.grad.data.abs().clone().cpu().numpy()
 					if args.score == 'abs_w':
 						taylor = weight_copy# * weight_copy
 					elif args.score == 'abs_grad':
+						grad_copy = m.weight.grad.data.abs().clone().cpu().numpy()
 						taylor = grad_copy  # * weight_copy
 					elif args.score == 'grad_w':
+						grad_copy = m.weight.grad.data.abs().clone().cpu().numpy()
 						taylor = weight_copy*grad_copy  #
 					num_keep = int(total_param * threshold)
 					arg_max = np.argsort(taylor)  # Returns the indices sort an array. small->big
@@ -493,19 +471,21 @@ class ContinualNN(object):
 					mask_list_4d.append(mask)  # 0 is more
 					mask_list_R_4d.append(mask_R)
 					threshold_list.append(thre)
-					gradient_list.append(m.weight.grad.data.clone().cpu().numpy())
+					if args.score in ['abs_grad', 'grad_w']:
+						gradient_list.append(m.weight.grad.data.clone().cpu().numpy())
 					weight_list.append(m.weight.data.clone().cpu().numpy())
 					taylor_list.append(taylor)
 
 					##bn bias
 					total_param = m.bias.data.shape[0]
 					weight_copy = m.bias.data.abs().clone().cpu().numpy()
-					grad_copy = m.bias.grad.data.abs().clone().cpu().numpy()
 					if args.score == 'abs_w':
 						taylor = weight_copy# * weight_copy
 					elif args.score == 'abs_grad':
+						grad_copy = m.bias.grad.data.abs().clone().cpu().numpy()
 						taylor = grad_copy  # * weight_copy
 					elif args.score == 'grad_w':
+						grad_copy = m.bias.grad.data.abs().clone().cpu().numpy()
 						taylor = weight_copy*grad_copy  #
 					num_keep = int(total_param * threshold)
 					arg_max = np.argsort(taylor)  # Returns the indices sort an array. small->big
@@ -518,7 +498,8 @@ class ContinualNN(object):
 					mask_list_4d.append(mask)
 					mask_list_R_4d.append(mask_R)
 					threshold_list.append(thre)
-					gradient_list.append(m.bias.grad.data.clone().cpu().numpy())
+					if args.score in ['abs_grad', 'grad_w']:
+						gradient_list.append(m.bias.grad.data.clone().cpu().numpy())
 					weight_list.append(m.bias.data.clone().cpu().numpy())
 					taylor_list.append(taylor)
 
@@ -536,7 +517,8 @@ class ContinualNN(object):
 					mask_list_4d.append(mask)
 					mask_list_R_4d.append(mask_R)
 					threshold_list.append(thre)
-					gradient_list.append(m.bias.grad.data.clone().cpu().numpy())
+					if args.score in ['abs_grad', 'grad_w']:
+						gradient_list.append(m.bias.grad.data.clone().cpu().numpy())
 					weight_list.append(m.bias.data.clone().cpu().numpy())
 					taylor_list.append(taylor)
 
@@ -554,27 +536,30 @@ class ContinualNN(object):
 					mask_list_4d.append(mask)
 					mask_list_R_4d.append(mask_R)
 					threshold_list.append(thre)
-					gradient_list.append(m.bias.grad.data.clone().cpu().numpy())
+					if args.score in ['abs_grad', 'grad_w']:
+						gradient_list.append(m.bias.grad.data.clone().cpu().numpy())
 					weight_list.append(m.bias.data.clone().cpu().numpy())
 					taylor_list.append(taylor)
 
-					if torch.__version__ == '1.0.1.post2': # torch 1.0 bn.num_tracked
-						mask_list_4d.append(np.zeros(1))
-						mask_list_R_4d.append(np.zeros(1))
-						threshold_list.append(np.zeros(1))
-						gradient_list.append(np.zeros(1))
-						weight_list.append(np.zeros(1))
-						taylor_list.append(taylor)
+					# if torch.__version__ == '1.0.1.post2': # torch 1.0 bn.num_tracked
+					mask_list_4d.append(np.zeros(1))
+					mask_list_R_4d.append(np.zeros(1))
+					threshold_list.append(np.zeros(1))
+					gradient_list.append(np.zeros(1))
+					weight_list.append(np.zeros(1))
+					taylor_list.append(taylor)
 
 				elif isinstance(m, nn.Linear): # neuron-wise
+					# print('linear', m)
 					#linear weight
 					weight_copy = m.weight.data.abs().clone().cpu().numpy()
-					grad_copy = m.weight.grad.data.abs().clone().cpu().numpy()
 					if args.score == 'abs_w':
 						taylor = np.sum(weight_copy, axis = 1)
 					elif args.score == 'abs_grad':
+						grad_copy = m.weight.grad.data.abs().clone().cpu().numpy()
 						taylor = np.sum(grad_copy, axis = 1)
 					elif args.score == 'grad_w':
+						grad_copy = m.weight.grad.data.abs().clone().cpu().numpy()
 						taylor = np.sum(weight_copy*grad_copy, axis = 1)
 					num_keep = int(m.weight.data.shape[0] * threshold * args.FC_decay)
 					arg_max = np.argsort(taylor)  # Returns the indices that would sort an array. small->big
@@ -587,18 +572,20 @@ class ContinualNN(object):
 					mask_list_4d.append(mask)  # 0 is more
 					mask_list_R_4d.append(mask_R)  # 1 is more
 					threshold_list.append(thre)
-					gradient_list.append(m.weight.grad.data.clone())
+					if args.score in ['abs_grad', 'grad_w']:
+						gradient_list.append(m.weight.grad.data.clone())
 					weight_list.append(m.weight.data.clone())
 					taylor_list.append(taylor)
 
 					# linear bias
 					weight_copy = m.bias.data.abs().clone().cpu().numpy()
-					grad_copy = m.bias.grad.data.abs().clone().cpu().numpy()
 					if args.score == 'abs_w':
 						taylor = weight_copy# * weight_copy
 					elif args.score == 'abs_grad':
+						grad_copy = m.bias.grad.data.abs().clone().cpu().numpy()
 						taylor = grad_copy  # * weight_copy
 					elif args.score == 'grad_w':
+						grad_copy = m.bias.grad.data.abs().clone().cpu().numpy()
 						taylor = weight_copy*grad_copy  #
 					arg_max = np.argsort(taylor)
 					arg_max_rev = arg_max[::-1][:num_keep]
@@ -610,7 +597,8 @@ class ContinualNN(object):
 					mask_list_4d.append(mask)
 					mask_list_R_4d.append(mask_R)
 					threshold_list.append(thre)
-					gradient_list.append(m.bias.grad.data.clone())
+					if args.score in ['abs_grad', 'grad_w']:
+						gradient_list.append(m.bias.grad.data.clone())
 					weight_list.append(m.bias.data.clone())
 					taylor_list.append(taylor)
 			i += 1
@@ -623,6 +611,45 @@ class ContinualNN(object):
 
 		gradient_dict, threshold_dict, mask_dict, mask_R_dict, taylor_dict = self.convert_list_to_dict(gradient_list, threshold_list, all_mask, taylor_list)
 		return all_mask, threshold_dict, mask_dict, mask_R_dict, taylor_dict
+
+
+
+	def convert_list_to_dict(self, gradient_list, threshold_list, mask_file, taylor_list): # test drift range of the rest parameters
+		threshold_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
+		gradient_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
+		mask_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
+		mask_R_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
+		taylor_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
+		# print(threshold_dict.keys())
+		# print(len(threshold_dict))
+		assert len(threshold_list) == len(threshold_dict), 'Dictionary <-> list does not match'
+
+		idx = 0
+
+		mask_list = []
+		mask_list_R = []
+		for i in range(len(mask_file[0])):
+			mask_list.append(torch.from_numpy(mask_file[0][i]).type(torch.cuda.FloatTensor))
+			mask_list_R.append(torch.from_numpy(mask_file[1][i]).type(torch.cuda.FloatTensor))
+
+		for layer_name, param in self.net.state_dict().items():
+			# print(layer_name, param.shape)
+			# print(idx)
+			# print(threshold_list[idx])
+			threshold_dict[layer_name] = threshold_list[idx]
+			if args.score in ['abs_grad', 'grad_w']:
+				gradient_dict[layer_name] = gradient_list[idx]
+			mask_dict[layer_name] = mask_list[idx]
+			mask_R_dict[layer_name] = mask_list_R[idx]
+			taylor_dict[layer_name] = taylor_list[idx]
+			idx += 1
+		# for i, key in enumerate(mask_dict): # check if threshold loading into correct dictionary
+		#     assert threshold_list[i] == threshold_dict[key], 'Threshold loading incorrect'
+		#     assert taylor_list[i].all() == taylor_dict[key].all(), 'Taylor loading incorrect'
+		#     assert gradient_list[i].all() == gradient_dict[key].all(), 'Gradient loading incorrect'
+		logging.info('Several lists are converted into dictionaries (in torch.cuda)\n\n')
+		return  gradient_dict, threshold_dict, mask_dict, mask_R_dict, taylor_dict
+
 
 
 	def mask_frozen_weight(self, maskR):

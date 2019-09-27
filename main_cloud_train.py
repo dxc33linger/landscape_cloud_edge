@@ -9,9 +9,10 @@ import logging
 import os
 import pickle
 import sys
+from builtins import enumerate, range
+
 import scipy.io as scio
 import continualNN
-from learning_curve import *
 from load_cifar import *
 from utils_tool import count_parameters_in_MB
 import matplotlib.pyplot as plt
@@ -22,11 +23,11 @@ os.environ["CUDA_VISIBLE_DEVICES"]= args.gpu
 
 
 
-log_path = 'log_main.txt'.format()
+log_path = 'log_main_cloud.txt'.format()
 log_format = '%(asctime)s   %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M%p')
-fh = logging.FileHandler(os.path.join('./',log_path))
+fh = logging.FileHandler(os.path.join('../../results/',log_path))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 logging.info("---------------------------------------------------------------------------------------------")
@@ -79,17 +80,26 @@ test_acc = []
 for epoch in range(args.epoch):
 	train_acc.append(method.train(epoch, train_cloud))
 	test_acc.append(method.test(test_cloud))
+	logging.info('train_acc {0:.4f}'.format(train_acc[-1]))
+	logging.info('test_acc {0:.4f}\n\n'.format(test_acc[-1]))
 
-	logging.info('train_acc {0:.4f}\n\n\n'.format(train_acc[-1]))
+logging.info('---------------------------------------------------------------------')
+logging.info('test on EDGE data {0:.4f}'.format(method.test(train_edge)))
+logging.info('test on CLOUD data {0:.4f}'.format(method.test(train_cloud)))
+logging.info('test on CLOUD+EDGE data {0:.4f}\n\n\n'.format(method.test(train_all)))
+logging.info('---------------------------------------------------------------------')
 
-
+logging.info('Freeze {} weight of model {}'.format(args.task_division[0]/10, method.save_folder))
+current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict = method.sensitivity_rank_taylor_filter(args.task_division[0]/10)
+with open('../../mask_library/mask_model_' + method.save_folder + '.pickle', "wb") as f:
+	pickle.dump((current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict), f)
 
 
 # -----------------------------------------
 #  Record model
 # -----------------------------------------
-method.save_model(0, 0)
-avg_test = sum(test_acc[-9:])/10
+# method.save_model(0, 0)
+avg_test = sum(test_acc[-10:])/10
 
 x = np.linspace(0, len(test_acc), len(test_acc))
 plt.figure(figsize=(20,10))
@@ -101,11 +111,11 @@ plt.yticks(np.arange(0, 1.0, step=0.1))
 plt.grid(color='b', linestyle='-', linewidth=0.1)
 plt.legend(loc='best')
 plt.title('Learning curve')
-plt.savefig('../../results/cloud_learning_curve_acc{0:.4f}.png'.format(avg_test))
+plt.savefig('../../results/cloud_learning_curve_model_{}_acc{:.4f}.png'.format(args.model, avg_test))
 param = count_parameters_in_MB(method.net)
 logging.info('Param: %s MB',param)
-scio.savemat('cloud_training.mat', {'train_acc':train_acc, 'test_acc':test_acc})
-plt.show()
+scio.savemat('../../results/cloud_training_model_{}.mat'.format(args.model), {'train_acc':train_acc, 'test_acc':test_acc, 'cloud_list':cloud_list, 'current_edge_list':current_edge_list})
+# plt.show()
 
 
 
