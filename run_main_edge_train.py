@@ -26,11 +26,11 @@ os.mkdir('../../mask_library')
 
 
 i = 0
-for model in ['resnet56', 'resnet56_noshort', 'densenet121', 'resnet20', 'resnet20_noshort']:
+for model in ['resnet20', 'resnet20_noshort', 'densenet121', 'resnet56', 'resnet56_noshort']:
 
-	epoch_edge = {'resnet20':10, 'resnet20_noshort':20,
-				  'resnet56':15, 'resnet56_noshort':15,
-	              'resnet110':15, 'resnet110_noshort':20,
+	epoch_edge = {'resnet20':15, 'resnet20_noshort':20,
+				  'resnet56':20, 'resnet56_noshort':20,
+	              'resnet110':20, 'resnet110_noshort':20,
 	              'densenet121': 25}
 
 	epoch = {'resnet20':60, 'resnet20_noshort':120,
@@ -41,8 +41,10 @@ for model in ['resnet56', 'resnet56_noshort', 'densenet121', 'resnet20', 'resnet
 			 'resnet56':128, 'resnet56_noshort':128,
 	         'resnet110':64, 'resnet110_noshort':64,
 	         'densenet121': 64}
-	# command_tmp = 'python main_edge_train.py --epoch_edge ' + str(epoch_edge[model]) +' --dataset cifar10  --model ' + model
-	command_tmp = 'python main_edge_train.py --epoch_edge 1 --dataset cifar10  --model ' + model +' --epoch ' + str(epoch[model])+' --batch_size ' + str(batch[model])
+
+
+	command_tmp = 'python main_edge_train.py --epoch_edge ' + str(epoch_edge[model]) +' --dataset cifar10  --model ' + model +' --epoch ' + str(epoch[model])+' --batch_size ' + str(batch[model])
+	# command_tmp = 'python main_edge_train.py --epoch_edge 10  --dataset cifar10  --model ' + model +' --epoch ' + str(epoch[model])+' --batch_size ' + str(batch[model])
 
 	print('command:\n', command_tmp)
 

@@ -49,7 +49,7 @@ class ContinualNN(object):
 		# # self.net = resnet18(NA_C0, init_weights)
 		# logging.info('Network: ResNet32, init_weights=True')
 		self.net = model_loader.load(args.model)
-		print(self.net)
+		# print(self.net)
 		return self.net
 
 
@@ -115,7 +115,7 @@ class ContinualNN(object):
 			self.save_checkpoint_t7(epoch, acc, train_loss)
 		return correct/total
 
-	def save_checkpoint_t7(self, epoch, acc, loss, postfix = None):
+	def save_checkpoint_t7(self, epoch, acc, loss, postfix = ''):
 		self.save_folder = self.name_save_folder(args)
 		state = {
 			'acc': acc,
@@ -128,7 +128,6 @@ class ContinualNN(object):
 		opt_state = {
 			'optimizer': self.optimizer.state_dict()
 		}
-
 
 		self.model_file = '../loss-landscape/cifar10/trained_nets/'+self.save_folder+'_model_epoch'+ str(epoch) + postfix +'.t7'
 		logging.info('Saving checkpiont to ' + self.model_file)
@@ -372,7 +371,7 @@ class ContinualNN(object):
 
 
 		if epoch == 0 or epoch == args.epoch_edge - 1 or epoch == args.epoch_edge // 2:
-			self.save_checkpoint_t7(epoch, acc, train_loss, '_edge_model')
+			self.save_checkpoint_t7(epoch, acc, train_loss, postfix = '_edge_model')
 		return correct / total
 
 
@@ -407,6 +406,7 @@ class ContinualNN(object):
 
 
 	def sensitivity_rank_taylor_filter(self, threshold):
+		self.net.eval()
 		mask_list_4d = []
 		mask_list_R_4d = []
 		threshold_list = []
@@ -657,7 +657,7 @@ class ContinualNN(object):
 		param_processed = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
 
 		for layer_name, param in self.net.state_dict().items():
-				param_processed[layer_name] = Variable(torch.mul(param, maskR[layer_name]), requires_grad=True)
+				param_processed[layer_name] = Variable(torch.mul(param, maskR[layer_name]), requires_grad=False)
 		self.net.load_state_dict(param_processed)
 
 

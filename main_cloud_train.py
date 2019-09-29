@@ -83,10 +83,11 @@ for epoch in range(args.epoch):
 	logging.info('train_acc {0:.4f}'.format(train_acc[-1]))
 	logging.info('test_acc {0:.4f}\n\n'.format(test_acc[-1]))
 
+
 logging.info('---------------------------------------------------------------------')
-logging.info('test on EDGE data {0:.4f}'.format(method.test(train_edge)))
-logging.info('test on CLOUD data {0:.4f}'.format(method.test(train_cloud)))
-logging.info('test on CLOUD+EDGE data {0:.4f}\n\n\n'.format(method.test(train_all)))
+logging.info('test on EDGE data {0:.4f}'.format(method.test(test_edge)))
+logging.info('test on CLOUD data {0:.4f}'.format(method.test(test_cloud)))
+logging.info('test on CLOUD+EDGE data {0:.4f}\n\n\n'.format(method.test(test_all)))
 logging.info('---------------------------------------------------------------------')
 
 logging.info('Freeze {} weight of model {}'.format(args.task_division[0]/10, method.save_folder))

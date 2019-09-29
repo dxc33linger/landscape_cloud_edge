@@ -52,7 +52,9 @@ for batch_idx, (data, target) in enumerate(train_cloud):
 	logging.info('CLOUD re-assigned label: %s\n', np.unique(target))
 	break
 
-test_task_accu = []
+test_accu_edge = []
+test_accu_all = []
+test_accu_cloud = []
 all_data_list = []
 all_data_list.append(cloud_list)
 
@@ -68,10 +70,11 @@ logging.info('==> Resuming from checkpoint..and test\n file path: {}'.format(mod
 checkpoint = torch.load(model_file)
 method.net.load_state_dict(checkpoint['state_dict'])
 
-test_cloud = method.test(train_cloud)
-logging.info('test on cloud data {0:.4f}\n'.format(test_cloud))
-test_task_accu.append(test_cloud)
-
+accu = method.test(test_cloud)
+logging.info('test on cloud data {0:.4f}\n'.format(accu))
+test_accu_edge.append(accu)
+test_accu_all.append(accu)
+test_accu_cloud.append(accu)
 # -----------------------------------------
 #  segment cloud model
 # -----------------------------------------
@@ -83,8 +86,8 @@ current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, curren
 with open('../../mask_library/mask_model_' + save_folder + '_task_'+ str(task_id)+ '_top_'+ str(args.task_division[task_id] / 10) +'.pickle', "wb") as f:
 	pickle.dump((current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict), f)
 
-torch.save(method.net.state_dict(), '../../results/model_afterT{0}_Accu{1:.4f}.pt'.format(task_id, test_cloud))
-logging.info('test on cloud data {0:.4f}\n'.format(test_cloud))
+torch.save(method.net.state_dict(), '../../results/model_afterT{0}_Accu{1:.4f}.pt'.format(task_id, accu))
+logging.info('test on cloud data {0:.4f}\n'.format(accu))
 
 
 #
@@ -126,52 +129,57 @@ for task_id in range(1, len(args.task_division)):
 	# -----------------------------------------
 	#  Train edge model
 	# -----------------------------------------
-
 	for epoch in range(args.epoch_edge):
 		train_acc.append(method.train_with_frozen_filter(epoch, train_edge, mask_dict_pre, maskR_dict_pre))
-		test_acc.append(method.test(train_edge))
+		test_acc.append(method.test(test_edge))
 		logging.info('test_acc {0:.4f}\n'.format(test_acc[-1]))
 
 		# print(method.net.state_dict()['conv1.weight'][0:3, 0, :, :])
 		# print(method.net.state_dict()['linear.weight'][:, 0:3])
 
-		logging.info('task {}'.format(task_id))
-		logging.info('test on cloud data {0:.4f}\n'.format(method.test(train_cloud)))
-		logging.info('test on edge data {0:.4f}\n'.format(method.test(train_edge)))
-		logging.info('test on cloud+edge data {0:.4f}\n'.format(method.test(train_all)))
+	logging.info('-------------\n\ntask {}'.format(task_id))
+	logging.info('test on cloud data {0:.4f}\n'.format(method.test(test_cloud)))
+	logging.info('test on edge data {0:.4f}\n'.format(method.test(test_edge)))
+	logging.info('test on cloud+edge data {0:.4f}\n'.format(method.test(test_all)))
 
 
-	print("Current Task is {} : Finetune FC with balanced memory =================================".format(task_id))
+	# -----------------------------------------
+	#  Train FC
+	# -----------------------------------------
+	logging.info("-------------\n Current Task is {} : Finetune FC with balanced memory ".format(task_id))
 	# method.initialization(args.lr*0.5, int(num_epoch3*0.7), args.weight_decay)
 
-	for epoch in range(1):
+	for epoch in range(args.epoch_edge):
 		train_acc.append(method.train_fc(epoch, train_bm))
-		test_acc.append(method.test(train_edge))
-
-		logging.info('task {}'.format(task_id))
-		logging.info('test on cloud data {0:.4f}\n'.format(method.test(train_cloud)))
-		logging.info('test on edge data {0:.4f}\n'.format(method.test(train_edge)))
-		logging.info('test on cloud+edge data {0:.4f}\n'.format(method.test(train_all)))
 
 
-	torch.save(method.net.state_dict(), '../../results/model_afterT{0}_Accu{1:.4f}.pt'.format(task_id, sum(test_acc[-3:-1]) / 3))
+	logging.info('\n\n-------------task {} \n'.format(task_id))
+	test_accu_cloud.append(method.test(test_cloud))
+	logging.info('test on cloud data {0:.4f}\n'.format(test_accu_cloud[-1]))
+	test_accu_edge.append(method.test(test_edge))
+	logging.info('test on edge data {0:.4f}\n'.format(test_accu_edge[-1]))
+	test_accu_all.append(method.test(test_all))
+	logging.info('test on cloud+edge data {0:.4f}\n'.format(test_accu_all[-1]))
+
+
+	torch.save(method.net.state_dict(), '../../results/model_afterT{0}_Accu{1:.4f}.pt'.format(task_id, test_accu_all[-1]))
 	# print(method.net.state_dict()['conv1.weight'][0:3, 0, :, :])
 	# print(method.net.state_dict()['linear.weight'][:, 0:3])
 
-	#
+
 # 	# -----------------------------------------
 # 	#  Segment model
 # 	# -----------------------------------------
-#
+
 	method.mask_frozen_weight(maskR_dict_pre)
-	current_mask_list, current_threshold_dict, mask_dict_current, maskR_dict_current, current_taylor_dict = method.sensitivity_rank_taylor_filter(
-		args.task_division[task_id] / 10)
+	current_mask_list, current_threshold_dict, mask_dict_current, maskR_dict_current, current_taylor_dict = method.sensitivity_rank_taylor_filter( args.task_division[task_id] / 10)
 	mask_dict_pre, maskR_dict_pre = method.AND_twomasks(mask_dict_pre, mask_dict_current, maskR_dict_pre, maskR_dict_current)
 
 	with open('../../mask_library/mask_model_' + save_folder + '_task_'+ str(task_id)+ '_top_'+ str(args.task_division[task_id] / 10) +'.pickle', "wb") as f:
 		pickle.dump((current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict, mask_dict_current, maskR_dict_current), f)
-
-	test_task_accu.append(sum(test_acc[-3:-1]) / 3)
+	### To recover mask_frozen_weight
+	checkpoint = torch.load( '../../results/model_afterT{0}_Accu{1:.4f}.pt'.format(task_id, test_accu_all[-1]))
+	method.net.load_state_dict(checkpoint)
 
 
 	# break
@@ -179,19 +187,24 @@ for task_id in range(1, len(args.task_division)):
 ## RESULTS DOCUMENTATION
 print("====================== Document results ======================")
 
+title_font = { 'size':'8', 'color':'black', 'weight':'normal'} # Bottom vertical alignment for more space
+axis_font = { 'size':'10'}
 plt.figure()
-x = np.linspace(0, len(test_task_accu), num = len(test_task_accu))
-plt.xlim(0, len(test_task_accu)-1)
+
+x = np.linspace(0, len(test_accu_edge)-1, num = len(test_accu_edge))
+plt.xlim(0, len(test_accu_edge)-1)
 plt.xlabel('Task ID')
 plt.ylabel('Accuracy')
-plt.plot(x, test_task_accu , 'g-o', alpha=1.0, label = 'our method')
+plt.plot(x, test_accu_edge , 'g-o', alpha=1.0, label = 'Current task accuracy')
+plt.plot(x, test_accu_all , 'b-o', alpha=1.0, label = 'Learned classes accuracy')
+plt.plot(x, test_accu_cloud , 'r-o', alpha=1.0, label = 'T0 (cloud) accuracy')
 plt.yticks(np.arange(0, 1.0, step=0.1))
 plt.legend(loc='best')
-plt.title('Incrementally learning {} classes at a time'.format(args.classes_per_task))
-plt.savefig('../../results/incremental_curve_model_{}_{:.4f}.png'.format(args.model, test_task_accu[-1]))
+plt.title('Task: {} Model: {} \n Batch: {} Memory: {}\n Epoch_edge: {} ModelSize: {}'.format(args.task_division, args.model, args.batch_size, alltask_memory, args.epoch_edge, args.NA_C0), **title_font)
+plt.savefig('../../results/incremental_curve_model_{}_{:.4f}.png'.format(args.model, test_accu_all[-1]))
 # plt.show()
 
 
-#
-scio.savemat('../../results/edge_training_model_{}.mat'.format(args.model), {'train_acc':train_acc, 'test_acc':test_acc, 'cloud_list':cloud_list, 'current_edge_list':current_edge_list, 'test_task_accu':test_task_accu})
-#
+
+scio.savemat('../../results/edge_training_model_{}.mat'.format(args.model), {'train_acc':train_acc, 'test_acc':test_acc, 'cloud_list':cloud_list, 'current_edge_list':current_edge_list, 'test_accu_edge':test_accu_edge})
+logging.info("args = %s", args)

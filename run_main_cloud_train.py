@@ -12,11 +12,15 @@ args = parser.parse_args()
 
 
 i = 0
-# for model in ['vgg11', 'resnet56_noshort']:#['resnet56', 'resnet56_noshort', 'densenet121', 'vgg11']:
-for model in ['resnet110_noshort']:
+for model in ['resnet20', 'resnet20_noshort', 'resnet56_noshort','resnet56', 'densenet121']:
 
-	epoch = {'resnet20':60, 'resnet20_noshort':120,  'resnet110':80, 'resnet110_noshort':150, 'densenet121': 125, 'vgg11': 200}
+	task_division = [9, 1]
+
+	epoch = {'resnet20':60, 'resnet20_noshort':120,  'resnet110':80, 'resnet110_noshort':150, 'densenet121': 125, 'vgg11': 200,
+	         'resnet56': 80, 'resnet56_noshort': 150}
+
 	command_tmp = 'python main_cloud_train.py --batch_size 64 --epoch ' + str(epoch[model]) +' --dataset cifar10 --NA_C0 16 --model ' + model
+
 	print('command:\n', command_tmp)
 
 	os.system(command_tmp)
