@@ -14,7 +14,9 @@ import continualNN
 from load_cifar import *
 from utils_tool import count_parameters_in_MB
 import matplotlib.pyplot as plt
-
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from args import parser
 args = parser.parse_args()
 os.environ["CUDA_VISIBLE_DEVICES"]= args.gpu
@@ -187,6 +189,9 @@ for task_id in range(1, len(args.task_division)):
 ## RESULTS DOCUMENTATION
 print("====================== Document results ======================")
 
+scio.savemat('../../results/edge_training_model_{}.mat'.format(args.model), {'train_acc':train_acc, 'test_acc':test_acc, 'cloud_list':cloud_list, 'current_edge_list':current_edge_list, 'test_accu_edge':test_accu_edge})
+
+
 title_font = { 'size':'8', 'color':'black', 'weight':'normal'} # Bottom vertical alignment for more space
 axis_font = { 'size':'10'}
 plt.figure()
@@ -204,7 +209,4 @@ plt.title('Task: {} Model: {} \n Batch: {} Memory: {}\n Epoch_edge: {} ModelSize
 plt.savefig('../../results/incremental_curve_model_{}_{:.4f}.png'.format(args.model, test_accu_all[-1]))
 # plt.show()
 
-
-
-scio.savemat('../../results/edge_training_model_{}.mat'.format(args.model), {'train_acc':train_acc, 'test_acc':test_acc, 'cloud_list':cloud_list, 'current_edge_list':current_edge_list, 'test_accu_edge':test_accu_edge})
 logging.info("args = %s", args)

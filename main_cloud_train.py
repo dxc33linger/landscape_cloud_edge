@@ -15,6 +15,8 @@ import scipy.io as scio
 import continualNN
 from load_cifar import *
 from utils_tool import count_parameters_in_MB
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from args import parser
@@ -95,11 +97,12 @@ current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, curren
 with open('../../mask_library/mask_model_' + method.save_folder + '.pickle', "wb") as f:
 	pickle.dump((current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict), f)
 
-
 # -----------------------------------------
 #  Record model
 # -----------------------------------------
 # method.save_model(0, 0)
+scio.savemat('../../results/cloud_training_model_{}.mat'.format(args.model), {'train_acc':train_acc, 'test_acc':test_acc, 'cloud_list':cloud_list, 'current_edge_list':current_edge_list})
+
 avg_test = sum(test_acc[-10:])/10
 
 x = np.linspace(0, len(test_acc), len(test_acc))
@@ -115,8 +118,9 @@ plt.title('Learning curve')
 plt.savefig('../../results/cloud_learning_curve_model_{}_acc{:.4f}.png'.format(args.model, avg_test))
 param = count_parameters_in_MB(method.net)
 logging.info('Param: %s MB',param)
-scio.savemat('../../results/cloud_training_model_{}.mat'.format(args.model), {'train_acc':train_acc, 'test_acc':test_acc, 'cloud_list':cloud_list, 'current_edge_list':current_edge_list})
+
 # plt.show()
+logging.info("args = %s", args)
 
 
 
