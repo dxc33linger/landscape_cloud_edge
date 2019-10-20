@@ -18,7 +18,7 @@ i = 0
 for model in ['resnet20', 'resnet20_noshort', 'resnet56_noshort','resnet56', 'densenet121']:
 
 	task_division = [9, 1]
-	NA_C0 = 64
+	NA_C0 = 16
 
 	epoch = {'resnet20':60, 'resnet20_noshort':120,  'resnet110':80, 'resnet110_noshort':150, 'densenet121': 125, 'vgg11': 200,
 	         'resnet56': 80, 'resnet56_noshort': 150}

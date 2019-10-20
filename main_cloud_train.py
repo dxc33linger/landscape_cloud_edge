@@ -94,7 +94,7 @@ logging.info('------------------------------------------------------------------
 
 logging.info('Freeze {} weight of model {}'.format(args.task_division[0]/10, method.save_folder))
 current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict = method.sensitivity_rank_taylor_filter(args.task_division[0]/10)
-with open('../../mask_library/mask_model_' + method.save_folder + '.pickle', "wb") as f:
+with open('../../mask_library/cloud_mask_model_' + method.save_folder + '.pickle', "wb") as f:
 	pickle.dump((current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict), f)
 
 # -----------------------------------------
