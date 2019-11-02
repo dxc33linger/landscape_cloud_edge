@@ -115,7 +115,7 @@ class ContinualNN(object):
 			self.save_checkpoint_t7(epoch, acc, train_loss)
 		return correct/total
 
-	def save_checkpoint_t7(self, epoch, acc, loss, postfix = ''):
+	def save_checkpoint_t7(self, epoch, acc, loss, postfix = '', path_postfix=''):
 		self.save_folder = self.name_save_folder(args)
 		state = {
 			'acc': acc,
@@ -128,8 +128,8 @@ class ContinualNN(object):
 		opt_state = {
 			'optimizer': self.optimizer.state_dict()
 		}
-
-		self.model_file = '../loss-landscape/cifar10/trained_nets/'+self.save_folder+'_model_epoch'+ str(epoch) + postfix +'.t7'
+		path = 'trained_nets' + path_postfix + '/'
+		self.model_file = '../loss-landscape/cifar10/'+path+self.save_folder+'_model_epoch'+ str(epoch) + postfix +'.t7'
 		logging.info('Saving checkpiont to ' + self.model_file)
 		torch.save(state, self.model_file)
 		# torch.save(opt_state, '../loss-landscape/cifar10/trained_nets/'+self.save_folder+'_opt_state_epoch' + str(epoch) + '.t7')
@@ -300,7 +300,7 @@ class ContinualNN(object):
 		plt.savefig('../results/histogram'+title+'.png')
 
 
-	def train_with_frozen_filter(self, epoch, trainloader, mask_dict, mask_dict_R):
+	def train_with_frozen_filter(self, epoch, trainloader, mask_dict, mask_dict_R, path_postfix):
 
 		param_old_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
 		for layer_name, param in self.net.state_dict().items():
@@ -371,7 +371,7 @@ class ContinualNN(object):
 
 
 		if epoch == 0 or epoch == args.epoch_edge - 1 or epoch == args.epoch_edge // 2:
-			self.save_checkpoint_t7(epoch, acc, train_loss, postfix = '_edge_model')
+			self.save_checkpoint_t7(epoch, acc, train_loss, '_edge_model', path_postfix,)
 		return correct / total
 
 
@@ -791,7 +791,7 @@ class ContinualNN(object):
 		mk = [',', 'o', 'v', '^', '<', '>', '1', '2', '3', 'p', 'P', '*', 'h', '+', 'x', 'D', 'd', '4', '8', 's']
 
 		ax.scatter(X_training_reduced_tsne[:, 0], X_training_reduced_tsne[:, 1], X_training_reduced_tsne[:, 2],
-		           c=labels_array, cmap='tab10', marker = mk[task_id])
+				   c=labels_array, cmap='tab10', marker = mk[task_id])
 		plt.savefig(title + '.png')
 
 
@@ -901,7 +901,7 @@ class ContinualNN(object):
 
 	def memory_to_dataloader(self, memoryset):
 		memory_dataloader = DataLoader(memoryset, batch_size=args.batch_size, shuffle=True, drop_last=False,
-		                               num_workers=1)
+									   num_workers=1)
 		logging.info('Memory wrapped to dataloader \n')
 
 		return memory_dataloader

@@ -41,7 +41,8 @@ parser.add_argument('--total_memory_size', type=int, default = 1000, help='memor
 parser.add_argument('--random_memory', type=bool, default = False, help='True: random memory, False: selective memory')
 
 
-parser.add_argument('--task_division', type=list, default = [9, 1])
+# parser.add_argument('--task_division', type=str, default = '1,1,1,1,1, 1,1,1,1,1')
+parser.add_argument('--task_division', type=str, default = '90, 10')
 
 # [5, 1, 1, 1, 1, 1]
 # parser.add_argument('--prune', type=bool, default = False, help='dataset shuffle')

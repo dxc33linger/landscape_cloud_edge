@@ -7,6 +7,13 @@ sys.path.append("../..")
 from args import parser
 args = parser.parse_args()
 
+if args.dataset == 'cifar10':
+    num_classes = 10
+elif args.dataset == 'cifar100':
+    num_classes = 100
+else:
+    raise ValueError
+    
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -97,7 +104,7 @@ class Bottleneck_noshortcut(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, num_classes):
         super(ResNet, self).__init__()
         self.in_planes = args.NA_C0
 
@@ -138,7 +145,7 @@ class ResNet(nn.Module):
 
 
 class ResNet_cifar(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, num_classes):
         super(ResNet_cifar, self).__init__()
         self.in_planes = args.NA_C0
 
@@ -169,7 +176,7 @@ class ResNet_cifar(nn.Module):
 
 
 class WResNet_cifar(nn.Module):
-    def __init__(self, block, num_blocks, k, num_classes=10):
+    def __init__(self, block, num_blocks, k, num_classes):
         super(WResNet_cifar, self).__init__()
         self.in_planes = 16*k
 
@@ -233,84 +240,90 @@ def ResNet152_noshort():
 def ResNet20():
     depth = 20
     n = (depth - 2) // 6
-    return ResNet_cifar(BasicBlock, [n,n,n])
+    return ResNet_cifar(BasicBlock, [n,n,n], num_classes)
 
 def ResNet20_noshort():
     depth = 20
     n = (depth - 2) // 6
-    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n])
+    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n], num_classes)
+
+def ResNet32():
+    depth = 32
+    n = (depth - 2) // 6
+    return ResNet_cifar(BasicBlock, [n,n,n], num_classes)
+
 
 def ResNet32_noshort():
     depth = 32
     n = (depth - 2) // 6
-    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n])
+    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n], num_classes)
 
 def ResNet44_noshort():
     depth = 44
     n = (depth - 2) // 6
-    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n])
+    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n], num_classes)
 
 def ResNet50_16_noshort():
     depth = 50
     n = (depth - 2) // 6
-    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n])
+    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n], num_classes)
 
 def ResNet56():
     depth = 56
     n = (depth - 2) // 6
-    return ResNet_cifar(BasicBlock, [n,n,n])
+    return ResNet_cifar(BasicBlock, [n,n,n], num_classes)
 
 def ResNet56_noshort():
     depth = 56
     n = (depth - 2) // 6
-    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n])
+    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n], num_classes)
 
 def ResNet110():
     depth = 110
     n = (depth - 2) // 6
-    return ResNet_cifar(BasicBlock, [n,n,n])
+    return ResNet_cifar(BasicBlock, [n,n,n], num_classes)
 
 def ResNet110_noshort():
     depth = 110
     n = (depth - 2) // 6
-    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n])
+    return ResNet_cifar(BasicBlock_noshortcut, [n,n,n], num_classes)
 
 def WRN56_2():
     depth = 56
     n = (depth - 2) // 6
-    return WResNet_cifar(BasicBlock, [n,n,n], 2)
+    return WResNet_cifar(BasicBlock, [n,n,n], 2, num_classes)
 
 def WRN56_4():
     depth = 56
     n = (depth - 2) // 6
-    return WResNet_cifar(BasicBlock, [n,n,n], 4)
+    return WResNet_cifar(BasicBlock, [n,n,n], 4, num_classes)
 
 def WRN56_8():
     depth = 56
     n = (depth - 2) // 6
-    return WResNet_cifar(BasicBlock, [n,n,n], 8)
+    return WResNet_cifar(BasicBlock, [n,n,n], 8, num_classes)
 
 def WRN56_2_noshort():
     depth = 56
     n = (depth - 2) // 6
-    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 2)
+    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 2, num_classes)
 
 def WRN56_4_noshort():
     depth = 56
     n = (depth - 2) // 6
-    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 4)
+    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 4, num_classes)
 
 def WRN56_8_noshort():
     depth = 56
     n = (depth - 2) // 6
-    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 8)
+    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 8, num_classes)
 
 def WRN110_2_noshort():
     depth = 110
     n = (depth - 2) // 6
-    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 2)
+    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 2, num_classes)
 
 def WRN110_4_noshort():
     depth = 110
     n = (depth - 2) // 6
-    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 4)
+    return WResNet_cifar(BasicBlock_noshortcut, [n,n,n], 4, num_classes)

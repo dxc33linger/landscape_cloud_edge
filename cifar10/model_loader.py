@@ -23,6 +23,7 @@ models = {
     'resnet152_noshort'     : resnet.ResNet152_noshort,
     'resnet20'              : resnet.ResNet20,
     'resnet20_noshort'      : resnet.ResNet20_noshort,
+    'resnet32'              : resnet.ResNet32,
     'resnet32_noshort'      : resnet.ResNet32_noshort,
     'resnet44_noshort'      : resnet.ResNet44_noshort,
     'resnet50_16_noshort'   : resnet.ResNet50_16_noshort,
