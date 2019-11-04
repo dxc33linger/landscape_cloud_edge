@@ -35,7 +35,7 @@ args = parser.parse_args()
 class ContinualNN(object):
 	def __init__(self):
 		self.batch_size = args.batch_size
-		self.model_path = '../loss-landscape/cifar10/trained_nets/'
+		self.model_path = '../../model_library'
 		self.baseline_path = '../../baseline_library/'
 		if not os.path.exists(self.baseline_path):
 			os.mkdir(self.baseline_path)
@@ -49,7 +49,7 @@ class ContinualNN(object):
 		# # self.net = resnet18(NA_C0, init_weights)
 		# logging.info('Network: ResNet32, init_weights=True')
 		self.net = model_loader.load(args.model)
-		# print(self.net)
+		print(self.net)
 		return self.net
 
 
@@ -166,6 +166,7 @@ class ContinualNN(object):
 		self.optimizer = optim.SGD(filter(lambda p: p.requires_grad, self.net.parameters()), lr=args.lr, momentum=0.9, weight_decay=args.weight_decay)
 
 		logging.info('\nEpoch: %d lr: %s' % (epoch, self.scheduler.get_lr()))
+		self.optimizer.step()
 		self.scheduler.step()
 		self.net.train()
 		train_loss = 0.0
@@ -231,10 +232,11 @@ class ContinualNN(object):
 
 
 
-	def save_model(self, model_id, task_id):
+	def save_model(self, model_id, task_id, threshold_task):
 		if not os.path.isdir(self.model_path):
-		   os.mkdir(self.model_path)
-		file_name = "Task{}_model{}_classes{}_shf{}.pickle".format(task_id, model_id, args.classes_per_task, args.shuffle)
+			os.mkdir(self.model_path)
+
+		file_name = "Task{}_model{}_classes{}_shf{}_top{}.pickle".format(task_id, model_id, args.classes_per_task, args.shuffle, threshold_task)
 		path = os.path.join(self.model_path, file_name)
 		pickle.dump(self.net.state_dict(), open(path, 'wb'))
 
@@ -248,8 +250,8 @@ class ContinualNN(object):
 		logging.info('Baseline is saved in [{}]\n'.format(path) )
 
 
-	def load_model(self, model_id, task_id, to_net):
-		file_name = "Task{}_model{}_classes{}_shf{}_top{}.pickle".format(task_id, model_id, args.classes_per_task, args.shuffle, args.threshold_task)
+	def load_model(self, model_id, task_id, to_net, threshold_task):
+		file_name = "Task{}_model{}_classes{}_shf{}_top{}.pickle".format(task_id, model_id, args.classes_per_task, args.shuffle, threshold_task)
 		path = os.path.join(self.model_path, file_name)
 		param_model_dict = pickle.load(open(path, 'rb'))
 		# assert param_model_dict['linear.weight'].get_device() == self.net.state_dict()['linear.weight'].get_device(), "parameter and net are not in same device"
@@ -258,7 +260,7 @@ class ContinualNN(object):
 
 
 
-	def load_model_random_initial(self, save_mask_file, save_mask_fileR, model_id, task_id):
+	def load_model_random_initial(self, save_mask_file, save_mask_fileR, model_id, task_id, threshold_task):
 		try:
 			mask_dict = pickle.load(open(save_mask_file, "rb"))
 			mask_reverse_dict = pickle.load(open(save_mask_fileR, "rb"))
@@ -273,7 +275,7 @@ class ContinualNN(object):
 
 		param_processed = OrderedDict([(k,None) for k in self.net.state_dict().keys()])
 
-		self.load_model(model_id, task_id, self.net)
+		self.load_model(model_id, task_id, self.net, threshold_task)
 
 		for layer_name, param_model in self.net.state_dict().items():
 			param_model = Variable(param_model.type(torch.cuda.FloatTensor), requires_grad = True)
@@ -300,7 +302,7 @@ class ContinualNN(object):
 		plt.savefig('../results/histogram'+title+'.png')
 
 
-	def train_with_frozen_filter(self, epoch, trainloader, mask_dict, mask_dict_R, path_postfix):
+	def train_with_frozen_filter(self, epoch, trainloader, mask_dict, mask_dict_R, path_postfix=''):
 
 		param_old_dict = OrderedDict([(k, None) for k in self.net.state_dict().keys()])
 		for layer_name, param in self.net.state_dict().items():
@@ -390,7 +392,7 @@ class ContinualNN(object):
 				inputs = Variable(inputs)
 				targets = Variable(targets)
 
-				outputs, _ = self.net(inputs)
+				outputs = self.net(inputs)
 				loss = self.criterion(outputs, targets)
 
 				test_loss += loss.item()

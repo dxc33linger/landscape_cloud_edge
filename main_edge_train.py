@@ -42,7 +42,7 @@ method.initialization(args.lr, args.lr_step_size, args.weight_decay)
 # -----------------------------------------
 # Prepare dataset
 # -----------------------------------------
-task_list, total_task = method.create_task()
+task_list, _ = method.create_task()
 logging.info('Task list %s: ', task_list)
 
 task_division = []
