@@ -74,9 +74,9 @@ for batch_idx, (data, target) in enumerate(train_cloud):
 	break
 # #
 num_epoch0 = args.epoch_edge
-num_epoch1 = int(args.epoch_edge * 0.3)
-num_epoch2 = int(args.epoch_edge * 0.6)
-num_epoch3 = int(args.epoch_edge * 0.1)
+num_epoch1 = int(args.epoch_edge * 0.2)
+num_epoch2 = int(args.epoch_edge * 0.5)
+num_epoch3 = int(args.epoch_edge * 0.3)
 #
 # num_epoch0 = args.epoch_edge
 # num_epoch1 = args.epoch_edge
@@ -198,9 +198,7 @@ for task_id in range(1, total_task):
 		test_multihead_0.append(method.test_multihead(0, test_cloud))
 		test_multihead_current.append(method.test_multihead(task_id, test_edge))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head T0 testing accu is : {:.4f}'.format( test_acc_0[-1]))
-		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Multi-headed T0 testing accu is : {:.4f}'.format( test_multihead_0[-1]))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head current testing accu is : {:.4f}'.format( test_acc_current[-1]))
-		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Multi-headed current testing accu is : {:.4f}'.format( test_multihead_current[-1]))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head mixed all tasks testing accu is : {:.4f}'.format( test_acc_mix[-1]))
 		logging.info('train_acc {0:.4f} \n\n\n'.format(train_acc[-1]))
 
@@ -221,16 +219,14 @@ for task_id in range(1, total_task):
 		if test_acc_mix[-1] > best_acc_mix:
 			best_acc_mix = test_acc_mix[-1]
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head T0 testing accu is : {:.4f}'.format( test_acc_0[-1]))
-		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Multi-headed T0 testing accu is : {:.4f}'.format( test_multihead_0[-1]))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head current testing accu is : {:.4f}'.format( test_acc_current[-1]))
-		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Multi-headed current testing accu is : {:.4f}'.format( test_multihead_current[-1]))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head mixed all tasks testing accu is : {:.4f}'.format( test_acc_mix[-1]))
 		logging.info('train_acc {0:.4f} \n\n\n'.format(train_acc[-1]))
 
 
 	logging.info("Current Task is {} : Finetune FC with balanced memory =================================".format(task_id))
 	method.initialization(args.lr*0.5, int(num_epoch3*0.7), args.weight_decay)
-
+	best_acc_mix = 0
 	for epoch in range(num_epoch3):
 		train_acc.append(method.train_fc(epoch, train_bm))
 
@@ -242,9 +238,7 @@ for task_id in range(1, total_task):
 		if test_acc_mix[-1] > best_acc_mix:
 			best_acc_mix = test_acc_mix[-1]
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head T0 testing accu is : {:.4f}'.format( test_acc_0[-1]))
-		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Multi-headed T0 testing accu is : {:.4f}'.format( test_multihead_0[-1]))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head current testing accu is : {:.4f}'.format( test_acc_current[-1]))
-		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Multi-headed current testing accu is : {:.4f}'.format( test_multihead_current[-1]))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head mixed all tasks testing accu is : {:.4f}'.format( test_acc_mix[-1]))
 		logging.info('train_acc {0:.4f} \n\n\n'.format(train_acc[-1]))
 
@@ -286,9 +280,7 @@ for task_id in range(1, total_task):
 			test_multihead_0.append(method.test_multihead(0, test_cloud))
 			test_multihead_current.append(method.test_multihead(task_id, test_edge))
 			logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head T0 testing accu is : {:.4f}'.format( test_acc_0[-1]))
-			logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Multi-headed T0 testing accu is : {:.4f}'.format( test_multihead_0[-1]))
 			logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head current testing accu is : {:.4f}'.format( test_acc_current[-1]))
-			logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Multi-headed current testing accu is : {:.4f}'.format( test_multihead_current[-1]))
 			logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head mixed all tasks testing accu is : {:.4f}'.format( test_acc_mix[-1]))
 
 		logging.info("Current Task is {} : Combine masks  ==========================================".format(task_id))

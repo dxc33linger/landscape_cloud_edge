@@ -12,7 +12,7 @@ parser.add_argument('--gpu', type=str, default = '0', help='GPU')
 parser.add_argument('--ngpu', type=int, default = 1, help='number of GPUs to use for each rank, useful for data parallel evaluation')
 parser.add_argument('--model', default='resnet32', help='model name')
 
-parser.add_argument('--seed', type=int, default = 22, help='random seed')
+parser.add_argument('--seed', type=int, default = 333, help='random seed')
 
 
 parser.add_argument('--dataset', default = 'cifar10', type=str, choices=['cifar10','cifar100'])
