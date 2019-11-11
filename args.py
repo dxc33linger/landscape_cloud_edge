@@ -7,7 +7,7 @@ Description: parser work
 
 import argparse
 
-parser = argparse.ArgumentParser(description='Single-Net Continual Learning (SNC) with Segmented Training, xiaocong du, April 2019')
+parser = argparse.ArgumentParser(description='Landscape of acquisitive learning, Xiaocong Du, October 2019')
 parser.add_argument('--gpu', type=str, default = '0', help='GPU')
 parser.add_argument('--ngpu', type=int, default = 1, help='number of GPUs to use for each rank, useful for data parallel evaluation')
 parser.add_argument('--model', default='resnet32', help='model name')
@@ -33,7 +33,7 @@ parser.add_argument('--lr', default = 0.1, type=float, help='learning rate')
 parser.add_argument('--lr_step_size', default = 50, type=int, help='learning rate decay step')
 parser.add_argument('--lr_gamma', default = 0.1, type=float, help='learning rate decay rate')
 
-parser.add_argument('--score', type=str, default = 'abs_w', choices=['abs_w','abs_grad', 'grad_w'], help='importance score')
+parser.add_argument('--score', type=str, default = 'grad_w', choices=['abs_w','abs_grad', 'grad_w'], help='importance score')
 
 
 parser.add_argument('--FC_decay', default = 1.0, type=float, help='FC_decay * threshold is the mask rate in FC layer')
@@ -42,7 +42,7 @@ parser.add_argument('--random_memory', type=bool, default = False, help='True: r
 
 
 # parser.add_argument('--task_division', type=str, default = '1,1,1,1,1, 1,1,1,1,1')
-parser.add_argument('--task_division', type=str, default = '80, 10,10')
+parser.add_argument('--task_division', type=str, default = '9, 1')
 
 # [5, 1, 1, 1, 1, 1]
 # parser.add_argument('--prune', type=bool, default = False, help='dataset shuffle')

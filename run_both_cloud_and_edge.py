@@ -21,22 +21,22 @@ import matplotlib.pyplot as plt
 i = 0
 
 # for task_division in ['1,1,1,1,1,1,1,1,1,1','5, 1, 1, 1, 1, 1', '6,1,1,1,1', '7,1,1,1', '8,1,1', '9,1']:
-for task_division in ['90,10', '80,10,10', '70,10,10,10', '60,10,10,10,10', '50,10,10,10,10,10', '10,10,10,10,10,10,10,10,10,10']:
+for model in ['vgg16']:
 # for task_division in ['9,1', '8,1,1', '7,1,1,1', '6,1,1,1,1', '5,1,1,1,1,1', '1,1,1,1,1,1,1,1,1,1']:
-
-	dataset = 'cifar100'
-	model = 'resnet32_noshort' #, 'resnet20_noshort', 'resnet56_noshort','resnet56', 'densenet121'
+# for task_division in ['90,10', '80,10,10', '70,10,10,10', '60,10,10,10,10', '50,10,10,10,10,10', '10,10,10,10,10,10,10,10,10,10']:
+	task_division = '9,1'
+	dataset = 'cifar10'
+	# model = '' #, 'resnet20_noshort', 'resnet56_noshort','resnet56', 'densenet121'
 
 	NA_C0 = 32
 	batch = 64
 	# epoch = int(task_division.split(',')[0])
 	# epoch_edge = int(int(task_division.split(',')[1]) * 2.5)
 
-	epoch = {'resnet32':60, 'resnet32_noshort':60, 'resnet20_noshort':15, 'resnet56':15, 'resnet56_noshort':20,
-	              'resnet110':20, 'resnet110_noshort':25, 'densenet121': 25}
+	epoch = {'resnet32':120, 'resnet32_noshort':60, 'resnet20_noshort':15, 'resnet56':80, 'resnet56_noshort':80,
+	              'resnet110':20, 'resnet110_noshort':25, 'densenet121': 25, 'vgg16':200}
 
-	epoch_edge = {'resnet32':20, 'resnet32_noshort':20, 'resnet20_noshort':15, 'resnet56':15, 'resnet56_noshort':20,
-	              'resnet110':20, 'resnet110_noshort':25, 'densenet121': 25}
+	epoch_edge = {'resnet32':60, 'resnet32_noshort':20, 'resnet20_noshort':15, 'resnet56':30, 'resnet56_noshort':30, 'resnet110':20, 'resnet110_noshort':25, 'densenet121': 25,'vgg16':60}
 
 	#
 	# command_tmp = 'python main_cloud_train.py --gpu 1 --batch_size 64 --epoch ' + str(epoch[model]) +' --dataset '+ dataset +' --NA_C0 '+ str(NA_C0)+ ' --model ' + model + ' --task_division ' + task_division

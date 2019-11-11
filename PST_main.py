@@ -40,10 +40,7 @@ method.initialization(args.lr, args.lr_step_size, args.weight_decay)
 # -----------------------------------------
 # Prepare dataset
 # -----------------------------------------
-if args.dataset == 'cifar10':
-	num_classes = 10
-else:
-	num_classes = 100
+
 
 task_list, _ = method.create_task()
 logging.info('Task list %s: ', task_list)
@@ -52,6 +49,14 @@ task_division = []
 for item in args.task_division.split(","):
 	task_division.append(int(item))
 total_task = len(task_division)
+
+if args.dataset == 'cifar10':
+	num_classes = 10
+	assert sum(task_division) <= 10
+
+elif args.dataset == 'cifar100':
+	num_classes = 100
+	assert sum(task_division) <= 100
 
 
 cloud_class = task_division[0]
@@ -67,29 +72,26 @@ all_data_list = []
 all_data_list.append(cloud_list)
 
 
-
 train_cloud, test_cloud = get_dataset_cifar(cloud_list, 0)
 for batch_idx, (data, target) in enumerate(train_cloud):
 	logging.info('CLOUD re-assigned label: %s\n', np.unique(target))
 	break
 # #
-num_epoch0 = args.epoch_edge
-num_epoch1 = int(args.epoch_edge * 0.2)
-num_epoch2 = int(args.epoch_edge * 0.5)
-num_epoch3 = int(args.epoch_edge * 0.3)
-#
 # num_epoch0 = args.epoch_edge
-# num_epoch1 = args.epoch_edge
-# num_epoch2 = args.epoch_edge
-# num_epoch3 = args.epoch_edge
+# num_epoch1 = int(args.epoch_edge * 0.2)
+# num_epoch2 = int(args.epoch_edge * 0.5)
+# num_epoch3 = int(args.epoch_edge * 0.3)
+#
+num_epoch0 = 2
+num_epoch1 = 2
+num_epoch2 = 2
+num_epoch3 = 2
 
 
 train_acc = []  
 test_acc_0 = []  
 test_acc_current = [] 
 test_acc_mix = [] 
-test_multihead_0 = [] 
-test_multihead_current = [] 
 test_task_accu = []  # At the end of each task, best overall test accuracy. Length = number of tasks
 test_acc_0_end = []  # At the end of each task, the accuracy of task 0. Length = number of tasks
 
@@ -103,8 +105,6 @@ for epoch in range(args.epoch):
 	test_acc_0.append(method.test(test_cloud))
 	test_acc_current.append(np.zeros(1))
 	test_acc_mix.append(np.zeros(1))
-	test_multihead_0.append(np.zeros(1))
-	test_multihead_current.append(np.zeros(1))
 
 	if test_acc_0[-1] > best_acc_0:
 		best_acc_0 = test_acc_0[-1]
@@ -129,8 +129,6 @@ for epoch in range(args.epoch):
 	test_acc_0.append(method.test(test_cloud))
 	test_acc_current.append(np.zeros(1))
 	test_acc_mix.append(np.zeros(1))
-	test_multihead_0.append(np.zeros(1))
-	test_multihead_current.append(np.zeros(1))
 	logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head This training on T0 testing accu is : {:.4f}'.format(method.test(test_cloud)))
 	logging.info('Cut T0 train_acc {0:.4f}\n\n\n'.format(train_acc[-1]))
 	if test_acc_0[-1] > best_acc_0:
@@ -195,8 +193,6 @@ for task_id in range(1, total_task):
 		test_acc_0.append(method.test(test_cloud))
 		test_acc_current.append(method.test(test_edge))
 		test_acc_mix.append(method.test(test_mix_full))
-		test_multihead_0.append(method.test_multihead(0, test_cloud))
-		test_multihead_current.append(method.test_multihead(task_id, test_edge))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head T0 testing accu is : {:.4f}'.format( test_acc_0[-1]))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head current testing accu is : {:.4f}'.format( test_acc_current[-1]))
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head mixed all tasks testing accu is : {:.4f}'.format( test_acc_mix[-1]))
@@ -214,8 +210,6 @@ for task_id in range(1, total_task):
 		test_acc_0.append(method.test(test_cloud))
 		test_acc_current.append(method.test(test_edge))
 		test_acc_mix.append(method.test(test_mix_full))
-		test_multihead_0.append(method.test_multihead(0, test_cloud))
-		test_multihead_current.append(method.test_multihead(task_id, test_edge))
 		if test_acc_mix[-1] > best_acc_mix:
 			best_acc_mix = test_acc_mix[-1]
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head T0 testing accu is : {:.4f}'.format( test_acc_0[-1]))
@@ -229,12 +223,9 @@ for task_id in range(1, total_task):
 	best_acc_mix = 0
 	for epoch in range(num_epoch3):
 		train_acc.append(method.train_fc(epoch, train_bm))
-
 		test_acc_0.append(method.test(test_cloud))
 		test_acc_current.append(method.test(test_edge))
 		test_acc_mix.append(method.test(test_mix_full))
-		test_multihead_0.append(method.test_multihead(0, test_cloud))
-		test_multihead_current.append(method.test_multihead(task_id, test_edge))
 		if test_acc_mix[-1] > best_acc_mix:
 			best_acc_mix = test_acc_mix[-1]
 		logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head T0 testing accu is : {:.4f}'.format( test_acc_0[-1]))
@@ -277,8 +268,6 @@ for task_id in range(1, total_task):
 			test_acc_0.append(method.test(test_cloud))
 			test_acc_current.append(method.test(test_edge))
 			test_acc_mix.append(method.test(test_mix_full))
-			test_multihead_0.append(method.test_multihead(0, test_cloud))
-			test_multihead_current.append(method.test_multihead(task_id, test_edge))
 			logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head T0 testing accu is : {:.4f}'.format( test_acc_0[-1]))
 			logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head current testing accu is : {:.4f}'.format( test_acc_current[-1]))
 			logging.info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Single-head mixed all tasks testing accu is : {:.4f}'.format( test_acc_mix[-1]))
@@ -332,7 +321,6 @@ scio.savemat('../../results/PSTmain_model{}_acc{:.4f}.mat'.format(args.model, be
               'best_acc_mix':best_acc_mix, 'best_acc_0': best_acc_0,'model':args.model,
 			'NA_C0':args.NA_C0, 'epoch': args.epoch, 'epoch_edge': args.epoch_edge, 'param':param,
             'lr': args.lr, 'lr_step_size':args.lr_step_size,
-			'test_multihead_0':test_multihead_0,'test_multihead_current':test_multihead_current,
             'classes_per_task': args.classes_per_task, 'test_acc_0_end':test_acc_0_end, 'test_task_accu':test_task_accu,
             'weight_decay': args.weight_decay,  'score': args.score,
             'dataset':args.dataset, 'task_list': task_list, 'seed':args.seed, 'shuffle':args.shuffle,

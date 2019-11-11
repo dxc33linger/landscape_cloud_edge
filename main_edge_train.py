@@ -51,8 +51,10 @@ for item in args.task_division.split(","):
 
 if args.dataset == 'cifar10':
 	assert sum(task_division) == 10
+	num_classes = 10
 else:
 	assert sum(task_division) == 100
+	num_classes = 100
 
 cloud_class = task_division[0]
 cloud_list = task_list[0 : task_division[0]]
@@ -74,10 +76,8 @@ all_data_list.append(cloud_list)
 # -----------------------------------------
 task_id = 0 ## cloud
 save_folder = str(args.model) + '_lr=' + str(args.lr)+'_bs=' + str(args.batch_size)
-# path_postfix = '_9classes_seed333_NAC016' + '/'
-path_postfix = '/'
+path_postfix = '_9classes_seed333_NAC032' + '/'
 model_file = '../loss-landscape/cifar10/trained_nets'+path_postfix + save_folder + '_model_epoch' + str(args.epoch-1) + '.t7'
-
 
 logging.info('==> Resuming from checkpoint..and test\n file path: {}'.format(model_file))
 checkpoint = torch.load(model_file)
@@ -92,12 +92,12 @@ test_accu_cloud.append(accu)
 #  segment cloud model
 # -----------------------------------------
 
-ratio = task_division[0] / 10
+ratio = task_division[0] / num_classes
 logging.info('ratio: {}'.format(ratio))
 
-logging.info('Freeze {} weight of model {}'.format(task_division[0] / 10, save_folder))
+logging.info('Freeze {} weight of model {}'.format(task_division[0] / num_classes, save_folder))
 current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict = method.sensitivity_rank_taylor_filter(ratio	)
-with open('../../mask_library/mask_model_' + save_folder + '_task_'+ str(task_id)+ '_top_'+ str(task_division[task_id] / 10) +'.pickle', "wb") as f:
+with open('../../mask_library/mask_model_' + save_folder + '_task_'+ str(task_id)+ '_top_'+ str(task_division[task_id] / num_classes) +'.pickle', "wb") as f:
 	pickle.dump((current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict), f)
 
 torch.save(method.net.state_dict(), '../../results/model_afterT{0}_Accu{1:.4f}.pt'.format(task_id, accu))
@@ -122,11 +122,10 @@ for task_id in range(1, len(task_division)):
 	current_edge_list = task_list[(total-task_division[task_id]) : total] # 0 1 2 3 4,   5,   6,  7 taskid = 3 task_division=[5,1,1,[1],1,1]
 	all_list = task_list[0 : total]
 	all_data_list.append(current_edge_list)
-	print(all_data_list)
 
 	alltask_memory = []
 	for i in range(len(task_division)):
-		alltask_memory.append(int(task_division[i] * args.total_memory_size / 10))
+		alltask_memory.append(int(task_division[i] * args.total_memory_size / num_classes))
 	logging.info('alltask_memory =  %s', alltask_memory)
 
 	train_edge, test_edge = get_dataset_cifar(current_edge_list, task_division[0]+ (task_id-1)*task_division[task_id] )
@@ -155,16 +154,16 @@ for task_id in range(1, len(task_division)):
 		# print(method.net.state_dict()['conv1.weight'][0:3, 0, :, :])
 		# print(method.net.state_dict()['linear.weight'][:, 0:3])
 
-	logging.info('-------------\n\ntask {}'.format(task_id))
+	logging.info('---------------------------------\n\ntask {}'.format(task_id))
 	logging.info('test on cloud data {0:.4f}\n'.format(method.test(test_cloud)))
-	logging.info('test on edge data {0:.4f}\n'.format(method.test(test_edge)))
+	logging.info('test on edge data {0:.4f} \n'.format(method.test(test_edge)))
 	logging.info('test on cloud+edge data {0:.4f}\n'.format(method.test(test_all)))
 
 
 	# -----------------------------------------
 	#  Train FC
 	# -----------------------------------------
-	logging.info("-------------\n Current Task is {} : Finetune FC with balanced memory ".format(task_id))
+	logging.info("------------- Current Task is {} : Finetune FC with balanced memory ".format(task_id))
 	# method.initialization(args.lr*0.5, int(num_epoch3*0.7), args.weight_decay)
 
 	for epoch in range(args.epoch_edge):
@@ -191,10 +190,10 @@ for task_id in range(1, len(task_division)):
 # 	# -----------------------------------------
 
 	method.mask_frozen_weight(maskR_dict_pre)
-	current_mask_list, current_threshold_dict, mask_dict_current, maskR_dict_current, current_taylor_dict = method.sensitivity_rank_taylor_filter( task_division[task_id] / 10)
+	current_mask_list, current_threshold_dict, mask_dict_current, maskR_dict_current, current_taylor_dict = method.sensitivity_rank_taylor_filter( task_division[task_id] / num_classes)
 	mask_dict_pre, maskR_dict_pre = method.AND_twomasks(mask_dict_pre, mask_dict_current, maskR_dict_pre, maskR_dict_current)
 
-	with open('../../mask_library/mask_model_' + save_folder + '_task_'+ str(task_id)+ '_top_'+ str(task_division[task_id] / 10) +'.pickle', "wb") as f:
+	with open('../../mask_library/mask_model_' + save_folder + '_task_'+ str(task_id)+ '_top_'+ str(task_division[task_id] / num_classes) +'.pickle', "wb") as f:
 		pickle.dump((current_mask_list, current_threshold_dict, mask_dict_pre, maskR_dict_pre, current_taylor_dict, mask_dict_current, maskR_dict_current), f)
 	### To recover mask_frozen_weight
 	checkpoint = torch.load( '../../results/model_afterT{0}_Accu{1:.4f}.pt'.format(task_id, test_accu_all[-1]))

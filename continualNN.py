@@ -439,8 +439,8 @@ class ContinualNN(object):
 					thre = taylor[arg_max_rev[-1]]
 					mask = np.zeros(weight_copy.shape)
 					mask_R = np.ones(weight_copy.shape)
-					mask[arg_max_rev.tolist(), :, :, :] = 1.0
-					mask_R[arg_max_rev.tolist(), :, :, :] = 0.0
+					mask[arg_max_rev.tolist(), :, :, :] = 1.0 ## mask = 0 means postions to be updated
+					mask_R[arg_max_rev.tolist(), :, :, :] = 0.0  ## mask = 0 means postions to be updated
 
 					mask_list_4d.append(mask)  # 0 is more
 					mask_list_R_4d.append(mask_R)  # 1 is more
