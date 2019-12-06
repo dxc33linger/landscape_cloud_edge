@@ -76,7 +76,7 @@ all_data_list.append(cloud_list)
 # -----------------------------------------
 task_id = 0 ## cloud
 save_folder = str(args.model) + '_lr=' + str(args.lr)+'_bs=' + str(args.batch_size)
-path_postfix = '_9classes_seed333_NAC032' + '/'
+path_postfix = '/'
 model_file = '../loss-landscape/cifar10/trained_nets'+path_postfix + save_folder + '_model_epoch' + str(args.epoch-1) + '.t7'
 
 logging.info('==> Resuming from checkpoint..and test\n file path: {}'.format(model_file))

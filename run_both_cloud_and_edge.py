@@ -19,41 +19,34 @@ import matplotlib.pyplot as plt
 
 
 i = 0
-
-# for task_division in ['1,1,1,1,1,1,1,1,1,1','5, 1, 1, 1, 1, 1', '6,1,1,1,1', '7,1,1,1', '8,1,1', '9,1']:
-for model in ['vgg16']:
-# for task_division in ['9,1', '8,1,1', '7,1,1,1', '6,1,1,1,1', '5,1,1,1,1,1', '1,1,1,1,1,1,1,1,1,1']:
 # for task_division in ['90,10', '80,10,10', '70,10,10,10', '60,10,10,10,10', '50,10,10,10,10,10', '10,10,10,10,10,10,10,10,10,10']:
-	task_division = '9,1'
-	dataset = 'cifar10'
-	# model = '' #, 'resnet20_noshort', 'resnet56_noshort','resnet56', 'densenet121'
+# for task_division in ['1,1,1,1,1,1,1,1,1,1','5,1,1,1,1,1', '6,1,1,1,1', '7,1,1,1', '8,1,1', '9,1']:
+# for task_division in ['1,1', '2,1', '3,1', '4,1', '5,1', '6,1', '7,1', '8,1', '9,1']:
+# for task_division in ['90,10', '80,10', '70,10', '60,10', '50,10', '40,10', '30,10', '20,10', '10,10']:
 
-	NA_C0 = 32
-	batch = 64
-	# epoch = int(task_division.split(',')[0])
-	# epoch_edge = int(int(task_division.split(',')[1]) * 2.5)
+for model in ['densenet121']:#, 'resnet20','resnet20_noshort', 'resnet56','resnet56_noshort', 'densenet121']:
+	i = 0
+	if not os.path.exists('../../results/{}'.format(model)):
+		os.mkdir('../../results/{}'.format(model))
 
-	epoch = {'resnet32':120, 'resnet32_noshort':60, 'resnet20_noshort':15, 'resnet56':80, 'resnet56_noshort':80,
-	              'resnet110':20, 'resnet110_noshort':25, 'densenet121': 25, 'vgg16':200}
+	for task_division in ['9,1', '8,1,1', '7,1,1,1', '6,1,1,1,1', '5,1,1,1,1,1', '1,1,1,1,1,1,1,1,1,1']:
 
-	epoch_edge = {'resnet32':60, 'resnet32_noshort':20, 'resnet20_noshort':15, 'resnet56':30, 'resnet56_noshort':30, 'resnet110':20, 'resnet110_noshort':25, 'densenet121': 25,'vgg16':60}
+		dataset = 'cifar10'
 
-	#
-	# command_tmp = 'python main_cloud_train.py --gpu 1 --batch_size 64 --epoch ' + str(epoch[model]) +' --dataset '+ dataset +' --NA_C0 '+ str(NA_C0)+ ' --model ' + model + ' --task_division ' + task_division
-	# print('command:\n', command_tmp)
-	# os.system(command_tmp)
-	#
-	# command_tmp = 'python main_edge_train.py --gpu 1 --epoch_edge ' + str(epoch_edge[model]) +' --dataset '+ dataset +' --model ' + model +' --epoch ' +  str(epoch[model])+' --batch_size ' + str(batch) + ' --NA_C0 ' +str(NA_C0) \
-	#               +' --task_division ' + task_division
-	# print('command:\n', command_tmp)
-	# os.system(command_tmp)
-	# i = i + 1
+		# ratio_c2e = int(int(task_division.split(',')[0]) / int(task_division.split(',')[1]))
+		NA_C0 = 16 # not for vgg
+		batch = 64
+		epoch = 60# max(40, int(int(task_division.split(',')[0])* 10))
+		epoch_edge = 60 #max(50, int(int(task_division.split(',')[0])+int(task_division.split(',')[1])* 1.0))
 
-	command_tmp = 'python PST_main.py --gpu 1 --epoch ' + str(epoch[model]) +' --epoch_edge '+str(epoch_edge[model])+' --dataset '+ dataset +' --model ' + model +' --batch_size ' + str(batch) + ' --NA_C0 ' +str(NA_C0) +' --task_division ' + task_division
-	print('command:\n', command_tmp)
-	os.system(command_tmp)
-	i = i + 1
 
-	scipy.io.savemat('../../results/tuning_{}.mat'.format(i), {'i':i, 'model': model, 'epoch':epoch, 'task':args.task_division, 'dataset':args.dataset, 'NA_C0': args.NA_C0})
+		command_tmp = 'python PST_main.py --gpu 1 --seed 1 --epoch ' + str(epoch) +' --epoch_edge '+str(epoch_edge)+' --dataset '+ dataset +' --model ' + model +' --batch_size ' + str(batch) + ' --NA_C0 ' +str(NA_C0) +' --task_division ' + task_division
+		print('command:\n', command_tmp)
+		os.system(command_tmp)
+
+
+		i = int(task_division.split(',')[0]) if dataset == 'cifar10' else int(int(task_division.split(',')[0])/10)
+
+		scipy.io.savemat('../../results/{}/tuning_{}.mat'.format(model,i), {'i':i, 'model': model, 'epoch':epoch, 'task':args.task_division, 'dataset':args.dataset, 'NA_C0': args.NA_C0, 'epoch_edge':epoch_edge})
 
 

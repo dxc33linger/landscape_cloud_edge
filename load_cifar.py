@@ -183,7 +183,7 @@ def get_partial_dataset_cifar(start_idx, label_list, num_images):
 
 	# Create datasetLoaders from trainset and testset
 	partial_trainsetLoader  = DataLoader(partial_trainset, batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=1)#, worker_init_fn=_init_fn)
-	partial_testsetLoader   = DataLoader(partial_testset , batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=1)#, worker_init_fn=_init_fn)
+	partial_testsetLoader   = DataLoader(partial_testset , batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=1)#, worker_init_fn=_init_fn)
 
 	return partial_trainsetLoader, partial_testsetLoader
 

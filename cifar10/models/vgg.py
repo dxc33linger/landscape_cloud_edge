@@ -1,11 +1,21 @@
 import torch
 import torch.nn as nn
+from args import parser
+args = parser.parse_args()
+
+if args.dataset == 'cifar10':
+    num_classes = 10
+elif args.dataset == 'cifar100':
+    num_classes = 100
+else:
+    raise ValueError
+    
 
 cfg = {
-    # 'VGG9':  [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M'],
+    'VGG9':  [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M'],
     'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
     'VGG13': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-    'VGG16': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
+    'VGG16': [args.NA_C0, args.NA_C0, 'M', args.NA_C0*2, args.NA_C0*2, 'M', args.NA_C0*4, args.NA_C0*4, args.NA_C0*4, 'M', args.NA_C0*8, args.NA_C0*8, args.NA_C0*8, 'M', args.NA_C0*8, args.NA_C0*8, args.NA_C0*8, 'M'],
     'VGG19': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
 }
 
@@ -14,7 +24,7 @@ class VGG(nn.Module):
     def __init__(self, vgg_name):
         super(VGG, self).__init__()
         self.features = self._make_layers(cfg[vgg_name])
-        self.classifier = nn.Linear(512, 10)
+        self.classifier = nn.Linear(args.NA_C0*8, num_classes)
 
     def forward(self, x):
         out = self.features(x)

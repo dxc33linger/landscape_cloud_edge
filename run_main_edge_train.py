@@ -23,7 +23,7 @@ os.mkdir('../../mask_library')
 
 
 i = 0
-for model in ['resnet20', 'resnet20_noshort','resnet56', 'resnet56_noshort', 'densenet121']:
+for model in ['densenet121']: #'resnet20', 'resnet20_noshort','resnet56', 'resnet56_noshort',
 
 	epoch_edge = {'resnet20':15, 'resnet20_noshort':20,
 				  'resnet56':20, 'resnet56_noshort':20,

@@ -111,7 +111,7 @@ class ContinualNN(object):
 			acc = 100.*correct/total
 			progress_bar(batch_idx, len(trainloader), 'Loss:%.3f|Acc:%.3f%% (%d/%d)--Train' % (train_loss/(batch_idx+1), acc, correct, total))
 
-		if epoch == 0 or epoch == args.epoch - 1 or epoch == args.epoch // 2:
+		if epoch == args.epoch - 1:
 			self.save_checkpoint_t7(epoch, acc, train_loss)
 		return correct/total
 
