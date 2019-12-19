@@ -163,6 +163,14 @@ for task_id in range(1, total_task):
 	for i in range(len(task_division)):
 		alltask_memory.append(int(task_division[i] * args.total_memory_size / num_classes))
 	logging.info('alltask_memory =  %s', alltask_memory)
+
+
+	
+	alltask_memory = [200] * len(args.task_division)
+
+
+
+
 	train_bm, _ = get_partial_dataset_cifar(0, all_data_list, num_images = alltask_memory)
 	print('all_data_list',all_data_list)
 	print('alltask_memory',alltask_memory)

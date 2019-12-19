@@ -24,14 +24,14 @@ i = 0
 # for task_division in ['1,1', '2,1', '3,1', '4,1', '5,1', '6,1', '7,1', '8,1', '9,1']:
 # for task_division in ['90,10', '80,10', '70,10', '60,10', '50,10', '40,10', '30,10', '20,10', '10,10']:
 
-for model in ['densenet121']:#, 'resnet20','resnet20_noshort', 'resnet56','resnet56_noshort', 'densenet121']:
+for model in ['resnet20']:#, 'resnet20','resnet20_noshort', 'resnet56','resnet56_noshort', 'densenet121']:
 	i = 0
 	if not os.path.exists('../../results/{}'.format(model)):
 		os.mkdir('../../results/{}'.format(model))
 
-	for task_division in ['9,1', '8,1,1', '7,1,1,1', '6,1,1,1,1', '5,1,1,1,1,1', '1,1,1,1,1,1,1,1,1,1']:
+	for task_division in ['90,10','80,10,10', '70,10,10,10', '60,10,10,10,10']:
 
-		dataset = 'cifar10'
+		dataset = 'cifar100'
 
 		# ratio_c2e = int(int(task_division.split(',')[0]) / int(task_division.split(',')[1]))
 		NA_C0 = 16 # not for vgg
