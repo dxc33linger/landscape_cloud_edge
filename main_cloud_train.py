@@ -53,7 +53,6 @@ for item in args.task_division.split(","):
 	task_division.append(int(item))
 
 
-cloud_class = task_division[0]
 task_id = 1
 cloud_list = task_list[0 : task_division[0]]
 total = 0

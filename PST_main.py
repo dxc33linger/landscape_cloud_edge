@@ -84,6 +84,8 @@ num_epoch1 = int(args.epoch_edge * 0.5)
 num_epoch2 = int(args.epoch_edge * 0.4)
 num_epoch3 = int(args.epoch_edge * 0.3)
 
+num_epoch1 = int(args.epoch_edge)
+
 # num_epoch0 = 2
 # num_epoch1 = 2
 # num_epoch2 = 2
@@ -166,14 +168,14 @@ for task_id in range(1, total_task):
 
 
 	
-	alltask_memory = [200] * len(args.task_division)
+	# alltask_memory = [200] * len(args.task_division)
 
 
 
 
 	train_bm, _ = get_partial_dataset_cifar(0, all_data_list, num_images = alltask_memory)
-	print('all_data_list',all_data_list)
-	print('alltask_memory',alltask_memory)
+	logging.info('all_data_list %s',all_data_list)
+	logging.info('alltask_memory %s',alltask_memory)
 	for batch_idx, (data, target) in enumerate(train_bm):
 		logging.info('batch {} train_bm (balanced memory) re-assigned training label: {}\n'.format(batch_idx, np.unique(target)))
 		break
