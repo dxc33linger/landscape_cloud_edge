@@ -29,18 +29,18 @@ for model in ['vgg16', 'resnet20','resnet20_noshort', 'resnet56','resnet56_nosho
 	if not os.path.exists('../../results/{}'.format(model)):
 		os.mkdir('../../results/{}'.format(model))
 
-	for task_division in ['9,1']:
+	for task_division in ['5,1,1,1,1,1']:
 
 		dataset = 'cifar10'
 
 		# ratio_c2e = int(int(task_division.split(',')[0]) / int(task_division.split(',')[1]))
-		NA_C0 = 16 # not for vgg
+		NA_C0 = 32 # not for vgg
 		batch = 64
 		epoch = 40# max(40, int(int(task_division.split(',')[0])* 10))
 		epoch_edge = 15 #max(50, int(int(task_division.split(',')[0])+int(task_division.split(',')[1])* 1.0))
 
 
-		command_tmp = 'python PST_main.py --gpu 1 --seed 1 --epoch ' + str(epoch) +' --epoch_edge '+str(epoch_edge)+' --dataset '+ dataset +' --model ' + model +' --batch_size ' + str(batch) + ' --NA_C0 ' +str(NA_C0) +' --task_division ' + task_division
+		command_tmp = 'python PST_main.py --gpu 0 --seed 1 --epoch ' + str(epoch) +' --epoch_edge '+str(epoch_edge)+' --dataset '+ dataset +' --model ' + model +' --batch_size ' + str(batch) + ' --NA_C0 ' +str(NA_C0) +' --task_division ' + task_division
 		print('command:\n', command_tmp)
 		os.system(command_tmp)
 
