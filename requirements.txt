@@ -12,7 +12,7 @@ mpi4py==2.0.0
 h5py==2.7.0
 
 # data
-scipy==0.19
+scipy==1.10.0
 scikit-learn
 numpy
 pillow
